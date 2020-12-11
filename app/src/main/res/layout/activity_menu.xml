@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".Menu">
+
+        <TextView
+            android:id="@+id/textViewEstadoSeguimiento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="177dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="178dp"
+            android:text="TextView"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <Button
+            android:id="@+id/buttonActivarDesactivarSeguimiento"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="106dp"
+            android:layout_marginEnd="108dp"
+            android:text="@string/button_Activar_Desactivar_Seguimiento"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewEstadoSeguimiento" />
+
+        <Button
+            android:id="@+id/buttonBorrarDatos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="130dp"
+            android:layout_marginTop="21dp"
+            android:layout_marginEnd="135dp"
+            android:text="@string/button_borrar_datos"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonDatos" />
+
+        <Button
+            android:id="@+id/buttonCompartir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="129dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginEnd="163dp"
+            android:text="@string/button_Compartir"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonBorrarDatos" />
+
+        <Button
+            android:id="@+id/buttonDatos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="141dp"
+            android:layout_marginTop="11dp"
+            android:layout_marginEnd="184dp"
+            android:text="@string/button_datos"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonActivarDesactivarSeguimiento" />
+
+        <CheckBox
+            android:id="@+id/checkBoxAlarmaPantalla"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="33dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginEnd="72dp"
+            android:enabled="true"
+            android:text="@string/checkboc_alarma_pantalla"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/checkBoxAlarmaProximidad"
+            app:layout_constraintTop_toBottomOf="@+id/buttonCompartir" />
+
+        <CheckBox
+            android:id="@+id/checkBoxAlarmaProximidad"
+            android:layout_width="139dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="38dp"
+            android:layout_marginTop="24dp"
+            android:checked="false"
+            android:text="@string/checkbox_alarma_proximidad"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonCompartir" />
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="252dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="41dp"
+            android:max="1000"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/checkBoxAlarmaPantalla" />
+
+        <TextView
+            android:id="@+id/textViewContadorSeekbar"
+            android:layout_width="91dp"
+            android:layout_height="63dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="16dp"
+            android:text="0"
+            android:textSize="30sp"
+            app:layout_constraintEnd_toStartOf="@+id/seekBar"
+            app:layout_constraintTop_toBottomOf="@+id/checkBoxAlarmaProximidad" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

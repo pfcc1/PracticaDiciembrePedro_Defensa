@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">PracticaDiciembrePedro</string>
+    <string name="introduzca_clave">Introduzca Clave</string>
+    <string name="button_camara">Camara</string>
+    <string name="button_galeria">Galeria</string>
+    <string name="button_acceso_menu">Acceso Menu</string>
+    <string name="button_Activar_Desactivar_Seguimiento">Activar/Desactivar</string>
+    <string name="button_borrar_datos">Borrar datos</string>
+    <string name="button_Compartir">Compartir</string>
+    <string name="button_datos">Datos</string>
+    <string name="checkboc_alarma_pantalla">Alarma Pantalla</string>
+    <string name="checkbox_alarma_proximidad">Alarma Proximidad</string>
+</resources>
