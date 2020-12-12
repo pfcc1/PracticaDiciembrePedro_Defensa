@@ -10,11 +10,13 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
@@ -56,17 +58,23 @@ public class Menu extends AppCompatActivity {
     double longitudInicial, latitudInicial;
     int banderaProximidad = 0;
     int banderaCancionProximidad=0;
-ManejadorBD manejadorBD=new ManejadorBD();
-Button buttonActivarSeguimiento;
+ServicioSeguimiento servicioSeguimiento;
+
+Button buttonActivarSeguimiento,buttonMostrarDatos,buttonBorrarDatos;
 double latitudActual,longitudActual;
+    ManejadorBD manejadorBD;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
         mediaPlayer = MediaPlayer.create(this, R.raw.telefono_antiguo);
+        manejadorBD=new ManejadorBD(this);
+        servicioSeguimiento=new ServicioSeguimiento();
 
         buttonActivarSeguimiento=findViewById(R.id.buttonActivarDesactivarSeguimiento);
+        buttonMostrarDatos=findViewById(R.id.buttonDatos);
+        buttonBorrarDatos=findViewById(R.id.buttonBorrarDatos);
         seekBar = findViewById(R.id.seekBar);
         textViewContadorSeekbar = findViewById(R.id.textViewContadorSeekbar);
         textViewEstadoSeguimiento=findViewById(R.id.textViewEstadoSeguimiento);
@@ -74,32 +82,83 @@ double latitudActual,longitudActual;
         checkBoxAlarmaPantalla = findViewById(R.id.checkBoxAlarmaPantalla);
         checkBoxAlarmaProximidad = findViewById(R.id.checkBoxAlarmaProximidad);
 
-        sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
+      sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
+
+        ServicioSeguimiento.setActividadMenu(this);
+        System.out.println("ESTADO ACCION PANTALLA LLL: "+ServicioSeguimiento.ACCION_PANTALLA);
+        if (ServicioSeguimiento.ACCION_PANTALLA==null){
+            ServicioSeguimiento.ACCION_PANTALLA="0";
+        }
+
+
+
+      String estadoSeguimiento= sharedPreferences.getString(ESTADO_ACTIVACION_SEGUIMIENTO,null);
+
+        if(estadoSeguimiento==null){
+            estadoSeguimiento="0";
+
+        }
+
+
+
+        if(estadoSeguimiento.equals("1")){
+
+           textViewEstadoSeguimiento.setText("Seguimiento Activado");
+            PosicionGPSActual();
+            IntentFilter intentFilter2 = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
+            intentFilter2.addAction("android.net.wifi.STATE_CHANGE");
+          intentFilter2.addAction(Intent.ACTION_SCREEN_ON);
+
+            getBaseContext().registerReceiver(servicioSeguimiento, intentFilter2);
+           // System.out.println("ESTADO ACCION PANTALLA: "+ServicioSeguimiento.ACCION_PANTALLA);
+            if(ServicioSeguimiento.ACCION_PANTALLA=="1") {
+                DatosParaInsertar();
+            }
+
+
+
+
+        }else if(estadoSeguimiento.equals("0")){
+            textViewEstadoSeguimiento.setText("Seguimiento Desactivado");
+        }
+
+
+
+
 
         buttonActivarSeguimiento.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
                String estadoSeguimiento= sharedPreferences.getString(ESTADO_ACTIVACION_SEGUIMIENTO,null);
 
-               if(estadoSeguimiento==null){
-                   estadoSeguimiento="0";
+                System.out.println("Estado Seguimiento BOTON: "+estadoSeguimiento);
 
-               }
+                if(estadoSeguimiento==null){
+                    estadoSeguimiento="0";
+
+                }
 
                if(estadoSeguimiento.equals("1")){
-                   SharedPreferences.Editor editor = sharedPreferences.edit();
-                   editor.putString(ESTADO_ACTIVACION_SEGUIMIENTO, "1");
-                   editor.commit();
 
-                   textViewEstadoSeguimiento.setText("Seguimiento Activado");
-               }else if(estadoSeguimiento.equals("0")){
                    SharedPreferences.Editor editor = sharedPreferences.edit();
                    editor.putString(ESTADO_ACTIVACION_SEGUIMIENTO, "0");
                    editor.commit();
 
+                   estadoSeguimiento="0";
                    textViewEstadoSeguimiento.setText("Seguimiento Desactivado");
-               }
+
+               }else if(estadoSeguimiento.equals("0")){
+
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString(ESTADO_ACTIVACION_SEGUIMIENTO, "1");
+                    editor.commit();
+
+                    estadoSeguimiento="1";
+                    textViewEstadoSeguimiento.setText("Seguimiento Activado");
+                }
             }
         });
 
@@ -107,13 +166,29 @@ double latitudActual,longitudActual;
 
 
 
+        buttonMostrarDatos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+              Intent intentMostrarDatos = new Intent(getApplicationContext(),MostrarDatos.class);
+              startActivity(intentMostrarDatos);
+            }
+        });
+
+        buttonBorrarDatos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                
+            }
+        });
 
 
-        selCheckboxAlarmaPantalla = sharedPreferences.getString(ESTADO_CHECKBOX_ALARMA_PANTALLA, null);
+
+    selCheckboxAlarmaPantalla = sharedPreferences.getString(ESTADO_CHECKBOX_ALARMA_PANTALLA, null);
 
         System.out.println("ESTADO CHECKBOX: " + selCheckboxAlarmaPantalla);
 
-        if (selCheckboxAlarmaPantalla == null) {
+       if (selCheckboxAlarmaPantalla == null) {
             selCheckboxAlarmaPantalla = "0";
         }
 
@@ -126,6 +201,8 @@ double latitudActual,longitudActual;
             getBaseContext().registerReceiver(cambioEstado, intentFilter);
 
 
+
+
         } else if (selCheckboxAlarmaPantalla.equals("0")) {
             sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -134,7 +211,7 @@ double latitudActual,longitudActual;
         }
 
 
-        checkBoxAlarmaPantalla.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+      checkBoxAlarmaPantalla.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // System.out.println("LO HE CHEQUEADO");
@@ -144,8 +221,7 @@ double latitudActual,longitudActual;
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(ESTADO_CHECKBOX_ALARMA_PANTALLA, "1");
                     editor.commit();
-                    /*checkBoxAlarmaPantalla.setChecked(true);
-                    checkBoxAlarmaPantalla.setEnabled(true);*/
+
                     IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
                     getBaseContext().registerReceiver(cambioEstado, intentFilter);
                     lanzarNotificacionEstadoAlarma(true);
@@ -155,7 +231,7 @@ double latitudActual,longitudActual;
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(ESTADO_CHECKBOX_ALARMA_PANTALLA, "0");
                     editor.commit();
-                    //checkBoxAlarmaPantalla.setChecked(false);
+
                     selCheckboxAlarmaPantalla = "0";
                     lanzarNotificacionEstadoAlarma(false);
                 }
@@ -163,6 +239,12 @@ double latitudActual,longitudActual;
 
             }
         });
+
+
+
+
+
+
 
         checkBoxAlarmaProximidad.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -174,6 +256,9 @@ double latitudActual,longitudActual;
                 }
             }
         });
+
+
+
 
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -352,7 +437,7 @@ double latitudActual,longitudActual;
 
     }
 
-    private int PorcentajeActualBateria(){
+    public int PorcentajeActualBateria(){
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
         Intent batteryStatus = registerReceiver(null, ifilter);
 
@@ -364,31 +449,41 @@ double latitudActual,longitudActual;
         return Math.round(battery*100)/100;
     }
 
-    public void DatosParaInsertar(){
-        PosicionGPSActual();
-
-        Date fecha=new Date();
-        DateFormat dateFormatFecha = new SimpleDateFormat("dd/MM/yyyy");
-        DateFormat dateFormatHora=new SimpleDateFormat("HH:mm:ss");
-
-        String fechaActual= dateFormatFecha.format(fecha);
-        String horaActual=  dateFormatHora.format(fecha);
-
-        int porcentajeBateria=PorcentajeActualBateria();
+   public void DatosParaInsertar(){
 
 
+           Date fecha = new Date();
+           DateFormat dateFormatFecha = new SimpleDateFormat("dd/MM/yyyy");
+           DateFormat dateFormatHora = new SimpleDateFormat("HH:mm:ss");
 
-    boolean insertar=  manejadorBD.insertar(fechaActual,horaActual, String.valueOf(porcentajeBateria),String.valueOf(latitudActual),String.valueOf(longitudActual));
+           String fechaActual = dateFormatFecha.format(fecha);
+           String horaActual = dateFormatHora.format(fecha);
 
-     if(insertar){
-         Toast.makeText(getApplicationContext(),"Insertado Correctamente",Toast.LENGTH_SHORT).show();
-     }else{
-         Toast.makeText(getApplicationContext(),"Error no se ha Insertado",Toast.LENGTH_SHORT).show();
-     }
+           int porcentajeBateria = PorcentajeActualBateria();
 
 
+           System.out.println("Fecha: " + fechaActual);
+           System.out.println("Hora: " + horaActual);
+           System.out.println("Bateria: " + porcentajeBateria);
+           System.out.println("Latitud: " + latitudActual);
+           System.out.println("Longitud: " + longitudActual);
 
-    }
+
+           if(latitudActual!=0 && longitudActual!=0) {
+
+
+               boolean insertar = manejadorBD.insertar(fechaActual, horaActual, String.valueOf(porcentajeBateria), String.valueOf(latitudActual), String.valueOf(longitudActual));
+
+               if (insertar) {
+                   Toast.makeText(getApplicationContext(), "Insertado Correctamente", Toast.LENGTH_SHORT).show();
+               } else {
+                   Toast.makeText(getApplicationContext(), "Error no se ha Insertado", Toast.LENGTH_SHORT).show();
+               }
+
+           }
+       }
+
+
 
 
 
@@ -438,17 +533,6 @@ double latitudActual,longitudActual;
         notificationManager.notify(1,builder.build());
     }
 
-   /* class CambioEstadoPantalla extends BroadcastReceiver {
 
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)){
-                Log.i("ESTADO PANTALLA","ALARMA PANTALLA");
-
-                mediaPlayer.start();
-            }
-        }
-    }
-
-    */
 }
+

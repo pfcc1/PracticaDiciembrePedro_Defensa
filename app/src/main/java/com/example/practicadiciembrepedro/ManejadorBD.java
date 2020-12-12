@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class ManejadorBD  extends SQLiteOpenHelper {
@@ -20,20 +21,23 @@ public class ManejadorBD  extends SQLiteOpenHelper {
 
     private static final String TABLE_NAME="SEGUIMIENTO";
 
-    public ManejadorBD(@Nullable Context context, @Nullable String name, @Nullable SQLiteDatabase.CursorFactory factory, int version) {
-        super(context, name, factory, version);
+
+    public ManejadorBD(Context context) {
+
+        super(context, DATABASE_NAME, null, 1);
     }
 
+ 
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE " + TABLE_NAME + "(" + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                +COL_FECHA + " TEXT, " +COL_HORA+" TEXT, "+ COL_BATERIA + " TEXT, " + COL_LATITUD_GPS + " TEXT, " +COL_LONGITUD_GPS+" TEXT "+ ")");
+        db.execSQL("CREATE TABLE " + TABLE_NAME + "(" + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                +COL_FECHA + " TEXT, " +COL_HORA+" TEXT, "+ COL_BATERIA + " TEXT, " + COL_LATITUD_GPS + " TEXT, " +COL_LONGITUD_GPS+" TEXT)");
 
     }
 
     public boolean insertar(String fecha,String hora,String bateria,String latitud,String longitud){
-        SQLiteDatabase sqLiteDatabase=getWritableDatabase();
+        SQLiteDatabase sqLiteDatabase=this.getWritableDatabase();
 
         ContentValues contentValues=new ContentValues();
         contentValues.put(COL_FECHA,fecha);
@@ -45,18 +49,24 @@ public class ManejadorBD  extends SQLiteOpenHelper {
         long resultador=sqLiteDatabase.insert(TABLE_NAME, null, contentValues);
         sqLiteDatabase.close();
 
-        return (resultador!=-1);
+        if (resultador ==-1) {
+            return false;
+        }else{
+            return true;
+        }
+
+
     }
 
     Cursor listar(){
-        SQLiteDatabase sqLiteDatabase=getReadableDatabase();
+        SQLiteDatabase sqLiteDatabase=this.getReadableDatabase();
 
         Cursor cursor=sqLiteDatabase.rawQuery("SELECT * FROM "+TABLE_NAME, null);
         return cursor;
     }
 
     public boolean borrar(String id){
-        SQLiteDatabase sqLiteDatabase=getWritableDatabase();
+        SQLiteDatabase sqLiteDatabase=this.getWritableDatabase();
 
         int borradas=sqLiteDatabase.delete(TABLE_NAME, COL_ID+"=?", new String[]{id});
 
