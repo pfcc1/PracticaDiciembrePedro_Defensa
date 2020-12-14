@@ -4,14 +4,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -47,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String RUTA_IMAGEN_GALERIA="IMAGENGALERIA";
     public static final String ESTADO_INICIO ="ESTADOINICIO" ;
     public static final String CONTRASENA_ACCESO = "CONTRAEÑAACCESO";
+    private static final String ID_CANAL ="ID_CANAL" ;
     Button buttonCamara,buttonGaleria,buttonAccesoMenu;
     ImageView imageView;
     EditText editTextContraseña;
@@ -86,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             case 1:
 
                 finish();
+
 
                 Intent intentAcceso = new Intent(this,ActiviyDatosAcceso.class);
                 startActivity(intentAcceso);
@@ -159,6 +166,11 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+
+
+
+
 
     private void ComprobarPermisoGaleria() {
         if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED) {
@@ -285,9 +297,10 @@ public class MainActivity extends AppCompatActivity {
                 if(resultCode==RESULT_OK && data!=null) {
                     System.out.println("HOLA");
 
-                  sharedPreferences = getSharedPreferences(NOMBRE_FICHERO, MODE_PRIVATE);
+                    Uri uri=data.getData();
+                    sharedPreferences = getSharedPreferences(NOMBRE_FICHERO, MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString(RUTA_IMAGEN_GALERIA, String.valueOf(data.getData()));
+                    editor.putString(RUTA_IMAGEN_GALERIA, String.valueOf(uri));
 
                    // System.out.println("URI FOTO: " + data.getData());
 
