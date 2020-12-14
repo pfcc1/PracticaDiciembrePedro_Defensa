@@ -4,27 +4,35 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ShareCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -33,6 +41,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -44,6 +54,7 @@ public class Menu extends AppCompatActivity {
     private static final long TIEMPO_REFRESCO = 500;
     private static final int PERMISO_GPS = 3;
     private static final String ESTADO_ACTIVACION_SEGUIMIENTO = "4";
+    private static final String RUTA_ARCHIVO_CSV = "5";
     public static MediaPlayer mediaPlayer;
     CambioEstado cambioEstado = new CambioEstado();
     CheckBox checkBoxAlarmaPantalla, checkBoxAlarmaProximidad;
@@ -60,9 +71,10 @@ public class Menu extends AppCompatActivity {
     int banderaCancionProximidad=0;
 ServicioSeguimiento servicioSeguimiento;
 
-Button buttonActivarSeguimiento,buttonMostrarDatos,buttonBorrarDatos;
+Button buttonActivarSeguimiento,buttonMostrarDatos,buttonBorrarDatos,buttonCompartirCSV;
 double latitudActual,longitudActual;
     ManejadorBD manejadorBD;
+    AlertDialog alert = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +87,7 @@ double latitudActual,longitudActual;
         buttonActivarSeguimiento=findViewById(R.id.buttonActivarDesactivarSeguimiento);
         buttonMostrarDatos=findViewById(R.id.buttonDatos);
         buttonBorrarDatos=findViewById(R.id.buttonBorrarDatos);
+        buttonCompartirCSV=findViewById(R.id.buttonCompartir);
         seekBar = findViewById(R.id.seekBar);
         textViewContadorSeekbar = findViewById(R.id.textViewContadorSeekbar);
         textViewEstadoSeguimiento=findViewById(R.id.textViewEstadoSeguimiento);
@@ -178,7 +191,40 @@ double latitudActual,longitudActual;
         buttonBorrarDatos.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                
+
+                System.out.println("ESTOY EN BORRAR");
+
+            Cursor cursorBorrar=manejadorBD.listar();
+            int bandera=0;
+            if(cursorBorrar!=null && cursorBorrar.getCount()>0){
+                while(cursorBorrar.moveToNext()){
+
+                    boolean Borrar=manejadorBD.borrar(cursorBorrar.getString(0));
+                    bandera=1;
+                }
+            }
+
+            cursorBorrar.close();
+
+
+
+                    if(bandera==1){
+                        Toast.makeText(getApplicationContext(),"Borrado Todo Correctamente",Toast.LENGTH_SHORT).show();
+                    }
+                    else{
+                        Toast.makeText(getApplicationContext(),"No hay registros para borrar",Toast.LENGTH_SHORT).show();
+                    }
+
+
+            }
+        });
+
+        buttonCompartirCSV.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                exportarCSVYCompartir();
+
             }
         });
 
@@ -317,6 +363,86 @@ double latitudActual,longitudActual;
         return resultado;
     }
 
+    private void DialogoParaActivacionGPS() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("El sistema GPS esta desactivado, ¿Desea activarlo?")
+                .setCancelable(false)
+                .setPositiveButton("Si", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        alert = builder.create();
+        alert.show();
+    }
+
+    public void exportarCSVYCompartir() {
+
+        File carpeta = new File(Environment.getExternalStorageDirectory() + "/ExportarSQLiteCSV");
+        String archivoCSV = carpeta.toString() + "/" + "Seguimiento.csv";
+
+        boolean isCreate = false;
+        if(!carpeta.exists()) {
+            isCreate = carpeta.mkdir();
+        }
+
+        try {
+            FileWriter fileWriter = new FileWriter(archivoCSV);
+
+            ManejadorBD admin = new ManejadorBD(this);
+
+            SQLiteDatabase db = admin.getWritableDatabase();
+
+            Cursor fila = db.rawQuery("select * from SEGUIMIENTO", null);
+
+            if(fila != null && fila.getCount() > 0) {
+                fila.moveToFirst();
+                while (fila.moveToNext()){
+
+                    fileWriter.append(fila.getString(0));
+                    fileWriter.append(",");
+                    fileWriter.append(fila.getString(1));
+                    fileWriter.append(",");
+                    fileWriter.append(fila.getString(2));
+                    fileWriter.append(",");
+                    fileWriter.append(fila.getString(3));
+                    fileWriter.append(",");
+                    fileWriter.append(fila.getString(4));
+                    fileWriter.append(",");
+                    fileWriter.append(fila.getString(5));
+                    fileWriter.append("\n");
+
+                }
+            } else {
+                Toast.makeText(getApplicationContext(), "No hay registros.", Toast.LENGTH_LONG).show();
+            }
+
+            db.close();
+            fileWriter.close();
+            Toast.makeText(getApplicationContext(), "SE CREO EL ARCHIVO CSV EXITOSAMENTE", Toast.LENGTH_LONG).show();
+
+        } catch (Exception e) { }
+
+        //Compartir
+       Intent intent = new Intent(Intent.ACTION_SEND);
+      intent.setType("text/csv");
+
+      Uri uri=Uri.fromFile(new File(archivoCSV));
+
+     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+      intent.putExtra(Intent.EXTRA_STREAM,uri);
+
+        Intent intentSeleccionador=(Intent.createChooser(intent,"Compartir con"));
+        startActivity(intentSeleccionador);
+        
+
+    }
+
 
     private void AlarmaProximidad() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -335,72 +461,89 @@ double latitudActual,longitudActual;
         else {
             MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.vuelve);
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            locationListener = new LocationListener() {
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-                    
-                }
 
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-
-
-                    if (banderaProximidad == 0) {
-                        banderaProximidad = 1;
-                        longitudInicial = location.getLongitude();
-                        latitudInicial = location.getLatitude();
-                        System.out.println("ESTOY EN ALARMA PROXIMIDAD INICIAL");
+            if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+                DialogoParaActivacionGPS();
+            }
+                locationListener = new LocationListener() {
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {
 
                     }
-                    if (banderaProximidad == 1) {
-                        Location locationInicial = new Location("Inicial");
-                        locationInicial.setLatitude(latitudInicial);
-                        locationInicial.setLongitude(longitudInicial);
 
-                        System.out.println("Latitud Inicial: "+locationInicial.getLatitude());
-                        System.out.println("Longitud Inicial: "+locationInicial.getLongitude());
+                    @Override
+                    public void onProviderEnabled(@NonNull String provider) {
 
-                        location.setLatitude(location.getLatitude());
-                        location.setLongitude(location.getLongitude());
+                    }
 
-                        System.out.println("Latitud Actual: "+location.getLatitude());
-                        System.out.println("Longitud Actual: "+location.getLongitude());
-                        System.out.println("ESTOY EN ELSE CALCULANDO METROS RECORRIDOS");
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {
 
 
-                        double metrosrecorridos = locationInicial.distanceTo(location);
-                        double metr = redondearDecimales(metrosrecorridos, 2);
 
-                        System.out.println("Metros: " + metr);
-                        //System.out.println("Metros Recorridos: " + metrosrecorridos);
-                        Toast.makeText(getApplicationContext(), "Metros Recorridos: " + metr, Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
 
 
-                        System.out.println("METROS SEEKBAR: "+metrosSeekbar);
+                        if (banderaProximidad == 0) {
+                            banderaProximidad = 1;
+                            longitudInicial = location.getLongitude();
+                            latitudInicial = location.getLatitude();
+                            System.out.println("ESTOY EN ALARMA PROXIMIDAD INICIAL");
+
+                        }
+                        if (banderaProximidad == 1) {
+                            Location locationInicial = new Location("Inicial");
+                            locationInicial.setLatitude(latitudInicial);
+                            locationInicial.setLongitude(longitudInicial);
+
+                            System.out.println("Latitud Inicial: " + locationInicial.getLatitude());
+                            System.out.println("Longitud Inicial: " + locationInicial.getLongitude());
+
+                            location.setLatitude(location.getLatitude());
+                            location.setLongitude(location.getLongitude());
+
+                            System.out.println("Latitud Actual: " + location.getLatitude());
+                            System.out.println("Longitud Actual: " + location.getLongitude());
+                            System.out.println("ESTOY EN ELSE CALCULANDO METROS RECORRIDOS");
+
+
+                            double metrosrecorridos = locationInicial.distanceTo(location);
+                            double metr = redondearDecimales(metrosrecorridos, 2);
+
+                            System.out.println("Metros: " + metr);
+                            //System.out.println("Metros Recorridos: " + metrosrecorridos);
+                            Toast.makeText(getApplicationContext(), "Metros Recorridos: " + metr, Toast.LENGTH_SHORT).show();
+
+
+                            System.out.println("METROS SEEKBAR: " + metrosSeekbar);
 
 
                             if (metr >= metrosSeekbar) {
 
-                                if(mediaPlayer.isPlaying()){
+                                if (mediaPlayer.isPlaying()) {
 
-                                    System.out.println("Duración Cancion: "+mediaPlayer.getDuration());
-                                    System.out.println("Posicion Cancion: "+mediaPlayer.getCurrentPosition());
+                                    System.out.println("Duración Cancion: " + mediaPlayer.getDuration());
+                                    System.out.println("Posicion Cancion: " + mediaPlayer.getCurrentPosition());
 
-                                }else{
-                                     mediaPlayer.start();
+                                } else {
+                                    mediaPlayer.start();
 
                                 }
 
                             }
 
-                    }
+                        }
 
-                }
-            };
+                    }
+                };
 
 
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, TIEMPO_REFRESCO, 0, locationListener);
         }
+
     }
 
     private void PosicionGPSActual(){
@@ -419,6 +562,11 @@ double latitudActual,longitudActual;
         }else {
 
             locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+            if ( !locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+                DialogoParaActivacionGPS();
+            }
+
             locationListener = new LocationListener() {
 
                 @Override
@@ -429,6 +577,16 @@ double latitudActual,longitudActual;
 
                 @Override
                 public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(@NonNull String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(@NonNull String provider) {
 
                 }
             };
