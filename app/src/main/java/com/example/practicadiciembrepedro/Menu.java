@@ -78,7 +78,7 @@ public class Menu extends AppCompatActivity {
     double latitudActual, longitudActual;
     ManejadorBD manejadorBD;
     AlertDialog alert = null;
-    int salirAlarma=0;
+   public int salirAlarma=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -284,15 +284,15 @@ public class Menu extends AppCompatActivity {
                     IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
                     getBaseContext().registerReceiver(cambioEstado, intentFilter);
                     lanzarNotificacionEstadoAlarma(true);
-
+                    CambioEstado.ActivacionAlarmaPantalla=1;
                 } else {
                     sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(ESTADO_CHECKBOX_ALARMA_PANTALLA, "0");
                     editor.commit();
 
+                    CambioEstado.ActivacionAlarmaPantalla=0;
                     selCheckboxAlarmaPantalla = "0";
-                    mediaPlayer.release();
 
                     lanzarNotificacionEstadoAlarma(false);
                 }
@@ -310,9 +310,20 @@ public class Menu extends AppCompatActivity {
                     banderaActivacion_GPS_AlarmaProximidad=1;
                     AlarmaProximidad();
 
-                    salirAlarma=0;
+
+                    banderaProximidadGPS_BD=0;
+                        salirAlarma=0;
+
+
+
                 }else{
-                    salirAlarma=1;
+
+                    longitudInicial=0;
+                    latitudInicial=0;
+                    banderaProximidad=0;
+
+                        salirAlarma=1;
+
                 }
             }
         });
@@ -467,25 +478,25 @@ public class Menu extends AppCompatActivity {
 
 
     private void AlarmaProximidad() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISO_GPS);
-            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (salirAlarma == 0) {
+            salirAlarma=1;
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISO_GPS);
+                locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                DialogoParaActivacionGPS();
-            }
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    DialogoParaActivacionGPS();
+                }
 
-        } else {
-
-
+            } else {
 
 
                 MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.vuelve);
@@ -522,7 +533,7 @@ public class Menu extends AppCompatActivity {
                             System.out.println("ESTOY EN ALARMA PROXIMIDAD INICIAL");
 
                         }
-                        if (banderaProximidad == 1) {
+                        if (banderaProximidad == 1 && salirAlarma==0) {
                             Location locationInicial = new Location("Inicial");
                             locationInicial.setLatitude(latitudInicial);
                             locationInicial.setLongitude(longitudInicial);
@@ -549,30 +560,27 @@ public class Menu extends AppCompatActivity {
                             System.out.println("METROS SEEKBAR: " + metrosSeekbar);
 
 
-                                if (metr >= metrosSeekbar) {
-                                    if (salirAlarma ==0) {
-                                        salirAlarma=1;
-                                        if (banderaProximidadGPS_BD == 0) {
-                                            banderaProximidadGPS_BD = 1;
+                            if (metr >= metrosSeekbar) {
 
-                                            DatosParaInsertar();
+                                if (banderaProximidadGPS_BD == 0) {
+                                    banderaProximidadGPS_BD = 1;
 
-                                            if (mediaPlayer.isPlaying()) {
+                                    DatosParaInsertar();
 
-                                                System.out.println("Duración Cancion: " + mediaPlayer.getDuration());
-                                                System.out.println("Posicion Cancion: " + mediaPlayer.getCurrentPosition());
+                                    if (mediaPlayer.isPlaying()) {
 
-                                            } else {
-                                                mediaPlayer.start();
+                                        System.out.println("Duración Cancion: " + mediaPlayer.getDuration());
+                                        System.out.println("Posicion Cancion: " + mediaPlayer.getCurrentPosition());
 
-                                            }
-                                        }
+                                    } else {
+                                        mediaPlayer.start();
+
                                     }
                                 }
-
                             }
                         }
 
+                    }
 
                 };
 
@@ -580,6 +588,7 @@ public class Menu extends AppCompatActivity {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, TIEMPO_REFRESCO, 0, locationListener);
             }
         }
+    }
 
 
 

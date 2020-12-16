@@ -9,7 +9,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class CambioEstado extends BroadcastReceiver {
-
+public static int ActivacionAlarmaPantalla;
     @Override
     public void onReceive(Context context, Intent intent) {
 
@@ -18,10 +18,12 @@ public class CambioEstado extends BroadcastReceiver {
         //String checkboxActivo=sharedPreferences.getString(Menu.ESTADO_CHECKBOX_ALARMA_PANTALLA,null);
 
         if(intent.getAction().equals(Intent.ACTION_SCREEN_ON)/* && checkboxActivo.equals("1")*/){
-            Log.i("ESTADO PANTALLA","ALARMA PANTALLA");
-            MediaPlayer mediaPlayer=MediaPlayer.create(context,R.raw.telefono_antiguo);
-            mediaPlayer.start();
 
+            if (ActivacionAlarmaPantalla==1) {
+                Log.i("ESTADO PANTALLA", "ALARMA PANTALLA");
+                MediaPlayer mediaPlayer = MediaPlayer.create(context, R.raw.telefono_antiguo);
+                mediaPlayer.start();
+            }
 
             //Menu.mediaPlayer.start();
         }else if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)){
