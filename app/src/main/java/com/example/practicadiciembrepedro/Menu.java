@@ -478,8 +478,7 @@ public class Menu extends AppCompatActivity {
 
 
     private void AlarmaProximidad() {
-        if (salirAlarma == 0) {
-            salirAlarma=1;
+
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                     ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
@@ -588,7 +587,7 @@ public class Menu extends AppCompatActivity {
                 locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, TIEMPO_REFRESCO, 0, locationListener);
             }
         }
-    }
+
 
 
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pratice December Pedro</string>
+    <string name="introduzca_clave">Password</string>
+    <string name="button_camara">Camera</string>
+    <string name="button_galeria">Gallery</string>
+    <string name="button_acceso_menu">Access Menu</string>
+    <string name="button_Activar_Desactivar_Seguimiento">Activate/Desactivate</string>
+    <string name="button_borrar_datos">Delete data</string>
+    <string name="button_Compartir">Share</string>
+    <string name="button_datos">Data</string>
+    <string name="checkboc_alarma_pantalla">Alarm Display</string>
+    <string name="checkbox_alarma_proximidad">Proximity alarm</string>
+    <string name="contrasena">Password</string>
+    <string name="mostrar_datos">Show data</string>
+</resources>

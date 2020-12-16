@@ -92,14 +92,23 @@ public class MainActivity extends AppCompatActivity {
 
             case 1://Si es la Segunda vez que entro a la aplicacion
 
-                finish();//Elimino la actividad MainActivity para
-                //que al darle al boton atras no se vaya a esta Actividad
 
-               // ServicioIntensoAlarmaPantalla.encolarTrabajo(this,new Intent());
-                //ServicioIntensoSeguimiento.encolarTrabajo(this,new Intent());
 
-                Intent intentAcceso = new Intent(this,ActiviyDatosAcceso.class);
-                startActivity(intentAcceso);
+               String contrasena= sharedPreferences.getString(CONTRASENA_ACCESO,editTextContraseña.getText().toString());
+
+                if(fotocamara!=null || fotogaleria!=null && contrasena.length()>=6){
+                    finish();//Elimino la actividad MainActivity para
+                    //que al darle al boton atras no se vaya a esta Actividad
+                    // ServicioIntensoAlarmaPantalla.encolarTrabajo(this,new Intent());
+                    //ServicioIntensoSeguimiento.encolarTrabajo(this,new Intent());
+
+                    Intent intentAcceso = new Intent(this,ActiviyDatosAcceso.class);
+                    startActivity(intentAcceso);
+                }
+
+
+
+
 
                 break;
 
