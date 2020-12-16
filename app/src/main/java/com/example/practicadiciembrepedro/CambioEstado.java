@@ -21,6 +21,8 @@ public class CambioEstado extends BroadcastReceiver {
             Log.i("ESTADO PANTALLA","ALARMA PANTALLA");
             MediaPlayer mediaPlayer=MediaPlayer.create(context,R.raw.telefono_antiguo);
             mediaPlayer.start();
+
+
             //Menu.mediaPlayer.start();
         }else if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)){
             Log.i("ESTADO","ARRANCO EL SERVICIO");

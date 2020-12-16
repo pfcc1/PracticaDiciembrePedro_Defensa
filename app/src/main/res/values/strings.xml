@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PracticaDiciembrePedro</string>
+    <string name="app_name">Practica Diciembre Pedro</string>
     <string name="introduzca_clave">Introduzca Clave</string>
     <string name="button_camara">Camara</string>
     <string name="button_galeria">Galeria</string>
@@ -10,4 +10,7 @@
     <string name="button_datos">Datos</string>
     <string name="checkboc_alarma_pantalla">Alarma Pantalla</string>
     <string name="checkbox_alarma_proximidad">Alarma Proximidad</string>
+    <string name="contrasena">Contraseña</string>
+    <string name="mostrar_datos">Mostrar datos</string>
+
 </resources>

@@ -57,7 +57,7 @@ public class Menu extends AppCompatActivity {
     private static final String RUTA_ARCHIVO_CSV = "5";
     public static MediaPlayer mediaPlayer;
     CambioEstado cambioEstado = new CambioEstado();
-    CheckBox checkBoxAlarmaPantalla, checkBoxAlarmaProximidad;
+   CheckBox checkBoxAlarmaPantalla, checkBoxAlarmaProximidad;
     SharedPreferences sharedPreferences;
     String selCheckboxAlarmaPantalla = "0";
     String selCheckboxAlarmaProximidad = "0";
@@ -71,10 +71,14 @@ public class Menu extends AppCompatActivity {
     int banderaProximidadGPS_BD = 0;
     ServicioSeguimiento servicioSeguimiento;
 
+    int banderaActivacion_GPS_AlarmaProximidad=0;
+    int banderaActivacion_GPS_Seguimiento=0;
+
     Button buttonActivarSeguimiento, buttonMostrarDatos, buttonBorrarDatos, buttonCompartirCSV;
     double latitudActual, longitudActual;
     ManejadorBD manejadorBD;
     AlertDialog alert = null;
+    int salirAlarma=0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,15 +99,25 @@ public class Menu extends AppCompatActivity {
         checkBoxAlarmaPantalla = findViewById(R.id.checkBoxAlarmaPantalla);
         checkBoxAlarmaProximidad = findViewById(R.id.checkBoxAlarmaProximidad);
 
+
+
+     //Obtengo los datos almacenados en el Fichero SharedPreferences
         sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
 
+        //Pasarle el contexto del Activity Menu
+        //al servicio de seguimiento sino no funciona
         ServicioSeguimiento.setActividadMenu(this);
+
+
         System.out.println("ESTADO ACCION PANTALLA LLL: " + ServicioSeguimiento.ACCION_PANTALLA);
-        if (ServicioSeguimiento.ACCION_PANTALLA == null) {
+       /* if (ServicioSeguimiento.ACCION_PANTALLA == null) {
             ServicioSeguimiento.ACCION_PANTALLA = "0";
         }
 
+        */
 
+
+        //Comprobar estado Servicio Seguimiento
         String estadoSeguimiento = sharedPreferences.getString(ESTADO_ACTIVACION_SEGUIMIENTO, null);
 
         if (estadoSeguimiento == null) {
@@ -112,7 +126,7 @@ public class Menu extends AppCompatActivity {
         }
 
 
-        if (estadoSeguimiento.equals("1")) {
+        if (estadoSeguimiento.equals("1")) {//Seguimiento Activado
 
             textViewEstadoSeguimiento.setText("Seguimiento Activado");
             PosicionGPSActual();
@@ -122,12 +136,14 @@ public class Menu extends AppCompatActivity {
 
             getBaseContext().registerReceiver(servicioSeguimiento, intentFilter2);
             // System.out.println("ESTADO ACCION PANTALLA: "+ServicioSeguimiento.ACCION_PANTALLA);
-            if (ServicioSeguimiento.ACCION_PANTALLA == "1") {
+           /* if (ServicioSeguimiento.ACCION_PANTALLA == "1") {
                 DatosParaInsertar();
             }
 
+            */
 
-        } else if (estadoSeguimiento.equals("0")) {
+
+        } else if (estadoSeguimiento.equals("0")) {//Seguimiento Desactivado
             textViewEstadoSeguimiento.setText("Seguimiento Desactivado");
         }
 
@@ -146,7 +162,7 @@ public class Menu extends AppCompatActivity {
 
                 }
 
-                if (estadoSeguimiento.equals("1")) {
+                if (estadoSeguimiento.equals("1")) {//Desactivar Seguimiento
 
 
                     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -156,13 +172,22 @@ public class Menu extends AppCompatActivity {
                     estadoSeguimiento = "0";
                     textViewEstadoSeguimiento.setText("Seguimiento Desactivado");
 
-                } else if (estadoSeguimiento.equals("0")) {
+                } else if (estadoSeguimiento.equals("0")) {//Activar Seguimiento
 
-                    PosicionGPSActual();
+                        PosicionGPSActual();
+
+
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putString(ESTADO_ACTIVACION_SEGUIMIENTO, "1");
                     editor.commit();
 
+                    IntentFilter intentFilter2 = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
+                    intentFilter2.addAction("android.net.wifi.STATE_CHANGE");
+                    intentFilter2.addAction(Intent.ACTION_SCREEN_ON);
+
+                    getBaseContext().registerReceiver(servicioSeguimiento, intentFilter2);
+
+                    banderaActivacion_GPS_Seguimiento=1;
                     estadoSeguimiento = "1";
                     textViewEstadoSeguimiento.setText("Seguimiento Activado");
                 }
@@ -185,7 +210,7 @@ public class Menu extends AppCompatActivity {
 
                 System.out.println("ESTOY EN BORRAR");
 
-                Cursor cursorBorrar = manejadorBD.listar();
+                Cursor cursorBorrar = manejadorBD.listar();//Listar Datos
                 int bandera = 0;
                 if (cursorBorrar != null && cursorBorrar.getCount() > 0) {
                     while (cursorBorrar.moveToNext()) {
@@ -195,7 +220,7 @@ public class Menu extends AppCompatActivity {
                     }
                 }
 
-                cursorBorrar.close();
+                cursorBorrar.close();//Cerrar Cursor
 
 
                 if (bandera == 1) {
@@ -218,6 +243,7 @@ public class Menu extends AppCompatActivity {
         });
 
 
+        //Alarma Pantalla
         selCheckboxAlarmaPantalla = sharedPreferences.getString(ESTADO_CHECKBOX_ALARMA_PANTALLA, null);
 
         System.out.println("ESTADO CHECKBOX: " + selCheckboxAlarmaPantalla);
@@ -226,7 +252,7 @@ public class Menu extends AppCompatActivity {
             selCheckboxAlarmaPantalla = "0";
         }
 
-        if (selCheckboxAlarmaPantalla.equals("1")) {
+        if (selCheckboxAlarmaPantalla.equals("1")) {//Alarma Activada
             System.out.println("ESTOY DENTRO DE SETCHECKED");
 
             checkBoxAlarmaPantalla.setChecked(true);
@@ -235,11 +261,12 @@ public class Menu extends AppCompatActivity {
             getBaseContext().registerReceiver(cambioEstado, intentFilter);
 
 
-        } else if (selCheckboxAlarmaPantalla.equals("0")) {
+        } else if (selCheckboxAlarmaPantalla.equals("0")) {//Alarma Desactivada
             sharedPreferences = getSharedPreferences(MainActivity.NOMBRE_FICHERO, MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString(ESTADO_CHECKBOX_ALARMA_PANTALLA, "0");
             editor.commit();
+            checkBoxAlarmaPantalla.setChecked(false);
         }
 
 
@@ -265,6 +292,8 @@ public class Menu extends AppCompatActivity {
                     editor.commit();
 
                     selCheckboxAlarmaPantalla = "0";
+                    mediaPlayer.release();
+
                     lanzarNotificacionEstadoAlarma(false);
                 }
 
@@ -278,8 +307,12 @@ public class Menu extends AppCompatActivity {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 
                 if (isChecked) {
+                    banderaActivacion_GPS_AlarmaProximidad=1;
                     AlarmaProximidad();
 
+                    salirAlarma=0;
+                }else{
+                    salirAlarma=1;
                 }
             }
         });
@@ -316,14 +349,25 @@ public class Menu extends AppCompatActivity {
                 if (grantResults.length > 0 &&
                         grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
-                } else {
-                    // Explain to the user that the feature is unavailable because
-                    // the features requires a permission that the user has denied.
-                    // At the same time, respect the user's decision. Don't link to
-                    // system settings in an effort to convince the user to change
-                    // their decision.
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                            && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        Toast.makeText(this, "No tienes permiso de GPS", Toast.LENGTH_SHORT).show();
+                    }else {
+                        if(banderaActivacion_GPS_AlarmaProximidad==1){
 
-                    Toast.makeText(this, "No tienes Permisos de GPS", Toast.LENGTH_SHORT).show();
+                            AlarmaProximidad();
+                        }else if(banderaActivacion_GPS_Seguimiento==1){
+                            PosicionGPSActual();
+                        }
+
+                    }
+
+
+
+                } else {
+
+                    Toast.makeText(this, "Debes darme permiso para continuar", Toast.LENGTH_SHORT).show();
                 }
                 break;
 
@@ -415,7 +459,7 @@ public class Menu extends AppCompatActivity {
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         intent.putExtra(Intent.EXTRA_STREAM, uri);
 
-        Intent intentSeleccionador = (Intent.createChooser(intent, "Compartir con"));
+        Intent intentSeleccionador = (Intent.createChooser(intent, "Compartir con"));//Compartir con cualquier aplicación
         startActivity(intentSeleccionador);
 
 
@@ -440,96 +484,104 @@ public class Menu extends AppCompatActivity {
             }
 
         } else {
-            MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.vuelve);
-            locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                DialogoParaActivacionGPS();
-            }
-            locationListener = new LocationListener() {
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
 
+
+
+                MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.vuelve);
+                locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+
+                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                    DialogoParaActivacionGPS();
                 }
-
-                @Override
-                public void onProviderEnabled(@NonNull String provider) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(@NonNull String provider) {
-
-
-                }
-
-                @Override
-                public void onLocationChanged(@NonNull Location location) {
-
-
-                    if (banderaProximidad == 0) {
-                        banderaProximidad = 1;
-                        longitudInicial = location.getLongitude();
-                        latitudInicial = location.getLatitude();
-                        System.out.println("ESTOY EN ALARMA PROXIMIDAD INICIAL");
+                locationListener = new LocationListener() {
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {
 
                     }
-                    if (banderaProximidad == 1) {
-                        Location locationInicial = new Location("Inicial");
-                        locationInicial.setLatitude(latitudInicial);
-                        locationInicial.setLongitude(longitudInicial);
 
-                        System.out.println("Latitud Inicial: " + locationInicial.getLatitude());
-                        System.out.println("Longitud Inicial: " + locationInicial.getLongitude());
+                    @Override
+                    public void onProviderEnabled(@NonNull String provider) {
 
-                        location.setLatitude(location.getLatitude());
-                        location.setLongitude(location.getLongitude());
+                    }
 
-                        System.out.println("Latitud Actual: " + location.getLatitude());
-                        System.out.println("Longitud Actual: " + location.getLongitude());
-                        System.out.println("ESTOY EN ELSE CALCULANDO METROS RECORRIDOS");
+                    @Override
+                    public void onProviderDisabled(@NonNull String provider) {
 
 
-                        double metrosrecorridos = locationInicial.distanceTo(location);
-                        double metr = redondearDecimales(metrosrecorridos, 2);
+                    }
 
-                        System.out.println("Metros: " + metr);
-                        //System.out.println("Metros Recorridos: " + metrosrecorridos);
-                        Toast.makeText(getApplicationContext(), "Metros Recorridos: " + metr, Toast.LENGTH_SHORT).show();
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
 
 
-                        System.out.println("METROS SEEKBAR: " + metrosSeekbar);
-
-
-                        if (metr >= metrosSeekbar) {
-                            if (banderaProximidadGPS_BD == 0) {
-                                banderaProximidadGPS_BD = 1;
-
-                                DatosParaInsertar();
-                            }
-
-                            if (mediaPlayer.isPlaying()) {
-
-                                System.out.println("Duración Cancion: " + mediaPlayer.getDuration());
-                                System.out.println("Posicion Cancion: " + mediaPlayer.getCurrentPosition());
-
-                            } else {
-                                mediaPlayer.start();
-
-                            }
+                        if (banderaProximidad == 0) {
+                            banderaProximidad = 1;
+                            longitudInicial = location.getLongitude();
+                            latitudInicial = location.getLatitude();
+                            System.out.println("ESTOY EN ALARMA PROXIMIDAD INICIAL");
 
                         }
+                        if (banderaProximidad == 1) {
+                            Location locationInicial = new Location("Inicial");
+                            locationInicial.setLatitude(latitudInicial);
+                            locationInicial.setLongitude(longitudInicial);
 
-                    }
+                            System.out.println("Latitud Inicial: " + locationInicial.getLatitude());
+                            System.out.println("Longitud Inicial: " + locationInicial.getLongitude());
 
-                }
-            };
+                            location.setLatitude(location.getLatitude());
+                            location.setLongitude(location.getLongitude());
+
+                            System.out.println("Latitud Actual: " + location.getLatitude());
+                            System.out.println("Longitud Actual: " + location.getLongitude());
+                            System.out.println("ESTOY EN ELSE CALCULANDO METROS RECORRIDOS");
 
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, TIEMPO_REFRESCO, 0, locationListener);
+                            double metrosrecorridos = locationInicial.distanceTo(location);
+                            double metr = redondearDecimales(metrosrecorridos, 2);
+
+                            System.out.println("Metros: " + metr);
+                            //System.out.println("Metros Recorridos: " + metrosrecorridos);
+                            Toast.makeText(getApplicationContext(), "Metros Recorridos: " + metr, Toast.LENGTH_SHORT).show();
+
+
+                            System.out.println("METROS SEEKBAR: " + metrosSeekbar);
+
+
+                                if (metr >= metrosSeekbar) {
+                                    if (salirAlarma ==0) {
+                                        salirAlarma=1;
+                                        if (banderaProximidadGPS_BD == 0) {
+                                            banderaProximidadGPS_BD = 1;
+
+                                            DatosParaInsertar();
+
+                                            if (mediaPlayer.isPlaying()) {
+
+                                                System.out.println("Duración Cancion: " + mediaPlayer.getDuration());
+                                                System.out.println("Posicion Cancion: " + mediaPlayer.getCurrentPosition());
+
+                                            } else {
+                                                mediaPlayer.start();
+
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+
+
+                };
+
+
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, TIEMPO_REFRESCO, 0, locationListener);
+            }
         }
 
-    }
+
 
     private void PosicionGPSActual() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&

@@ -67,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
         //Para que los ficheros que yo haga los pueda ver la cámara:
 
 
-            StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-            StrictMode.setVmPolicy(builder.build());
+         StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+         StrictMode.setVmPolicy(builder.build());
 
 
         buttonCamara=findViewById(R.id.buttonCamara);
@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity {
         editTextContraseña=findViewById(R.id.editTextTextClave);
 
 
+        //Obtengo los datos almacenados en el Fichero SharedPreferences
         sharedPreferences=getSharedPreferences(NOMBRE_FICHERO,MODE_PRIVATE);
         String fotocamara=sharedPreferences.getString(RUTA_IMAGEN_CAMARA,null);
         String fotogaleria=sharedPreferences.getString(RUTA_IMAGEN_GALERIA,null);
@@ -89,10 +90,13 @@ public class MainActivity extends AppCompatActivity {
 
                 break;
 
-            case 1:
+            case 1://Si es la Segunda vez que entro a la aplicacion
 
-                finish();
+                finish();//Elimino la actividad MainActivity para
+                //que al darle al boton atras no se vaya a esta Actividad
 
+               // ServicioIntensoAlarmaPantalla.encolarTrabajo(this,new Intent());
+                //ServicioIntensoSeguimiento.encolarTrabajo(this,new Intent());
 
                 Intent intentAcceso = new Intent(this,ActiviyDatosAcceso.class);
                 startActivity(intentAcceso);
@@ -109,11 +113,16 @@ public class MainActivity extends AppCompatActivity {
 
         System.out.println("FOTO CAMARA SHARE: "+fotocamara);
         System.out.println("FOTO GALERIA SHARE: "+fotogaleria);
+
+
+        //Introduzco en el ImageView la imagen
         if(fotocamara!=null){
+            fotogaleria=null;
           imageView.setImageURI(Uri.parse(fotocamara));
         }
 
         if(fotogaleria!=null){
+            fotocamara=null;
          imageView.setImageURI(Uri.parse(fotogaleria));
         }
 
@@ -265,7 +274,7 @@ public class MainActivity extends AppCompatActivity {
 
             case PEDI_PERMISO_DE_ESCRITURA:
                 if(grantResults.length>0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                  //hacerFotoAltaResolucion();
+                  hacerFotoAltaResolucion();
                 }else{
                     Toast.makeText(this, "Sin permiso de escritura no puedo hacer foto a alta resolución.", Toast.LENGTH_SHORT).show();
                 }
