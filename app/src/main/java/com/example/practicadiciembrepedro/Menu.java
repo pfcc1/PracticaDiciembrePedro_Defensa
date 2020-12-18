@@ -14,6 +14,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.TaskStackBuilder;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -26,6 +27,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.BatteryManager;
@@ -33,6 +35,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -133,6 +136,7 @@ public class Menu extends AppCompatActivity {
             IntentFilter intentFilter2 = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
             intentFilter2.addAction("android.net.wifi.STATE_CHANGE");
             intentFilter2.addAction(Intent.ACTION_SCREEN_ON);
+            intentFilter2.addAction("android.media.VOLUME_CHANGED_ACTION");
 
             getBaseContext().registerReceiver(servicioSeguimiento, intentFilter2);
             // System.out.println("ESTADO ACCION PANTALLA: "+ServicioSeguimiento.ACCION_PANTALLA);
@@ -141,7 +145,7 @@ public class Menu extends AppCompatActivity {
             }
 
             */
-
+ServicioSeguimiento.CAMBIO_VOLUMEN=0;
 
         } else if (estadoSeguimiento.equals("0")) {//Seguimiento Desactivado
             textViewEstadoSeguimiento.setText("Seguimiento Desactivado");
@@ -184,12 +188,15 @@ public class Menu extends AppCompatActivity {
                     IntentFilter intentFilter2 = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
                     intentFilter2.addAction("android.net.wifi.STATE_CHANGE");
                     intentFilter2.addAction(Intent.ACTION_SCREEN_ON);
+                    intentFilter2.addAction("android.media.VOLUME_CHANGED_ACTION");
 
                     getBaseContext().registerReceiver(servicioSeguimiento, intentFilter2);
 
                     banderaActivacion_GPS_Seguimiento=1;
                     estadoSeguimiento = "1";
                     textViewEstadoSeguimiento.setText("Seguimiento Activado");
+
+                    ServicioSeguimiento.CAMBIO_VOLUMEN=0;
                 }
             }
         });
@@ -259,6 +266,7 @@ public class Menu extends AppCompatActivity {
 
             IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
             getBaseContext().registerReceiver(cambioEstado, intentFilter);
+
 
 
         } else if (selCheckboxAlarmaPantalla.equals("0")) {//Alarma Desactivada
@@ -477,6 +485,7 @@ public class Menu extends AppCompatActivity {
     }
 
 
+
     private void AlarmaProximidad() {
 
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -588,7 +597,38 @@ public class Menu extends AppCompatActivity {
             }
         }
 
+public void NotificacionVolumen(){
+    String idChannel="Notificaciones con Fotos";
+    String nombreCanal="Notificaciones con FOtos";
 
+    NotificationManager notificationManager= (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    NotificationCompat.Builder builder=new NotificationCompat.Builder(this,ID_CANAL)
+            .setSmallIcon(R.drawable.ic_launcher_background)
+            .setContentTitle("Notificación de texto en varias lineas")
+            .setAutoCancel(true)
+            .setContentTitle("Texto inicial");
+
+    NotificationCompat.BigPictureStyle bigPictureStyle=new NotificationCompat.BigPictureStyle();
+    bigPictureStyle.setBigContentTitle("Notificación Volumen");
+    bigPictureStyle.setSummaryText("Cambio Volumen");
+
+    builder.setStyle(bigPictureStyle);
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        NotificationChannel notificationChannel=new NotificationChannel(idChannel,nombreCanal,NotificationManager.IMPORTANCE_DEFAULT);
+        notificationChannel.enableLights(true);//Habilitar Led
+        notificationChannel.setLightColor(Color.RED);
+        notificationChannel.enableVibration(true);
+        notificationChannel.setShowBadge(true);
+
+        builder.setChannelId(idChannel);
+        notificationManager.createNotificationChannel(notificationChannel);
+    }else{
+        builder.setDefaults(Notification.DEFAULT_SOUND| Notification.DEFAULT_VIBRATE| Notification.DEFAULT_LIGHTS);
+
+    }
+    notificationManager.notify(3,builder.build());
+}
 
 
     private void PosicionGPSActual() {
